@@ -1,3 +1,4 @@
+import json
 import os
 import re
 
@@ -18,10 +19,13 @@ def normalize_key(user_name: str, user_ssn: str) -> str:
 def get_gspread_client() -> gspread.Client:
     service_account_info = st.secrets.get("gcp_service_account")
     if service_account_info:
-        credentials = Credentials.from_service_account_info(
-            service_account_info,
-            scopes=SCOPES,
-        )
+        if isinstance(service_account_info, str):
+            try:
+                service_account_info = json.loads(service_account_info)
+            except json.JSONDecodeError as e:
+                raise RuntimeError(f"gcp_service_account JSON 파싱 실패: {e}") from e
+
+        credentials = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
         return gspread.authorize(credentials)
 
     credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
