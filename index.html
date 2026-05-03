@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; background-color: #f4f7f6; }
+    .container { max-width: 400px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    h2 { text-align: center; color: #333; }
+    .input-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+    button { width: 100%; padding: 12px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+    button:hover { background-color: #45a049; }
+    #result { margin-top: 20px; padding: 15px; border-radius: 5px; display: none; }
+    .success { background-color: #e8f5e9; border: 1px solid #c8e6c9; color: #2e7d32; }
+    .error { background-color: #ffebee; border: 1px solid #ffcdd2; color: #c62828; }
+    .info-row { margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>계좌정보 조회</h2>
+  <div class="input-group">
+    <label>이름</label>
+    <input type="text" id="userName" placeholder="예: 홍길동">
+  </div>
+  <div class="input-group">
+    <label>주민등록번호</label>
+    <input type="text" id="userSSN" placeholder="예: 000101-1000000">
+  </div>
+  <button onclick="searchAccount()">조회하기</button>
+
+  <div id="result"></div>
+</div>
+
+<script>
+  function searchAccount() {
+    const name = document.getElementById('userName').value;
+    const ssn = document.getElementById('userSSN').value;
+    const resultDiv = document.getElementById('result');
+
+    if(!name || !ssn) {
+      alert("이름과 주민등록번호를 모두 입력해주세요.");
+      return;
+    }
+
+    resultDiv.style.display = 'none';
+    resultDiv.innerHTML = "조회 중...";
+    resultDiv.className = "";
+    resultDiv.style.display = 'block';
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if(res.status === 'success') {
+          resultDiv.className = "success";
+          resultDiv.innerHTML = `
+            <div class="info-row"><strong>은행:</strong> ${res.bank}</div>
+            <div class="info-row"><strong>계좌번호:</strong> ${res.account}</div>
+            <div class="info-row"><strong>예금주:</strong> ${res.owner}</div>
+          `;
+        } else {
+          resultDiv.className = "error";
+          resultDiv.innerHTML = "일치하는 정보가 없습니다. 입력 값을 확인해주세요.";
+        }
+      })
+      .getAccountInfo(name, ssn);
+  }
+</script>
+
+</body>
+</html>

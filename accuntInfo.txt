@@ -1,0 +1,49 @@
+/**
+ * 웹 앱 접속 시 index.html 파일을 브라우저에 출력하는 함수입니다.
+ */
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('index')
+      .setTitle('직원 계좌정보 조회 시스템')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function getAccountInfo(userName, userSSN) {
+  if (!userName || !userSSN) {
+    return { status: 'error', message: '이름과 주민번호를 모두 입력해주세요.' };
+  }
+
+  const ssId = '1LXvb-OHg9nJuHBLjuB7Wv1GhaOdyoUK0c49SLWZhsH8';
+  const ss = SpreadsheetApp.openById(ssId);
+  const sheet = ss.getSheetByName('계좌정보조회');
+  
+  SpreadsheetApp.flush();
+  
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { status: 'not_found' };
+
+  const data = sheet.getRange(1, 1, lastRow, 12).getDisplayValues();
+  
+  // ✅ 하이픈(-) 및 공백 모두 제거
+  const targetKey = (userName.toString() + userSSN.toString())
+    .replace(/[\s\-]/g, "").toLowerCase();
+  
+  console.log("조회 시도 키: " + targetKey);
+
+  for (let i = 1; i < data.length; i++) {
+    // ✅ 시트 A열도 동일하게 하이픈 제거
+    let sheetKey = data[i][0].toString().replace(/[\s\-]/g, "").toLowerCase();
+    
+    if (sheetKey === targetKey && sheetKey !== "") {
+      console.log("일치하는 데이터 발견: Row " + (i + 1));
+      return {
+        status: 'success',
+        bank: data[i][9],
+        account: data[i][10],
+        owner: data[i][11]
+      };
+    }
+  }
+  
+  console.log("일치하는 키를 찾지 못함: " + targetKey);
+  return { status: 'not_found' };
+}
