@@ -93,14 +93,15 @@ def main() -> None:
 
     spreadsheet_id, configured_sheet_name = get_config()
 
-    client = None
     sheet_names: list[str] | None = None
+    diagnostics_error: str | None = None
     try:
         client = get_gspread_client()
         spreadsheet = client.open_by_key(spreadsheet_id)
         sheet_names = [ws.title for ws in spreadsheet.worksheets()]
-    except Exception:
+    except Exception as e:
         sheet_names = None
+        diagnostics_error = f"{type(e).__name__}: {e}"
 
     if "selected_sheet_name" not in st.session_state:
         st.session_state.selected_sheet_name = configured_sheet_name
@@ -132,6 +133,8 @@ def main() -> None:
             st.write({"available_sheets": sheet_names})
         else:
             st.warning("시트 목록을 불러오지 못했습니다. Secrets/권한/스프레드시트 ID를 확인해주세요.")
+            if diagnostics_error:
+                st.code(diagnostics_error)
 
     user_name = st.text_input("이름", placeholder="예: 홍길동")
     user_ssn = st.text_input("주민등록번호", placeholder="예: 000101-1000000")
